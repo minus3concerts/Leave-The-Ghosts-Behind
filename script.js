@@ -1,207 +1,133 @@
-function formatDate(dateStr) {
-  const d = new Date(dateStr);
-  return new Intl.DateTimeFormat('de-CH', {
-    weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric'
-  }).format(d);
-}
+/* basic helpers */
+document.documentElement.classList.remove('no-js');
 
-function qs(key){ return new URLSearchParams(location.search).get(key); }
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
 
-async function loadJSON(path){
-  const res = await fetch(path, { cache: 'no-store' });
-  if(!res.ok) throw new Error('Konnte ' + path + ' nicht laden');
-  return res.json();
-}
+/* sticky header shadow */
+const header = document.querySelector('.site-header');
+const onScroll = () => {
+  if (window.scrollY > 6) header.classList.add('scrolled');
+  else header.classList.remove('scrolled');
+};
+document.addEventListener('scroll', onScroll);
+onScroll();
 
-function slugify(s){
-  return s.toLowerCase()
-    .replace(/\s+/g,'-')
-    .replace(/[^a-z0-9\-]/g,'')
-    .slice(0,80);
-}
+/* hamburger */
+const nav = document.querySelector('[data-nav]');
+const btn = document.querySelector('.nav-toggle');
+btn.addEventListener('click', () => {
+  const open = btn.getAttribute('aria-expanded') === 'true';
+  btn.setAttribute('aria-expanded', String(!open));
+  nav.style.display = open ? 'none' : 'block';
+});
+$$('.site-nav a').forEach(a => a.addEventListener('click', () => {
+  // close on selection (mobile)
+  if (getComputedStyle(btn).display !== 'none') {
+    btn.setAttribute('aria-expanded', 'false');
+    nav.style.display = 'none';
+  }
+}));
 
-function makeICS(ev){
-  const dt = (date, time) => {
-    const [hh, mm] = (time||'00:00').split(':').map(Number);
-    const d = new Date(date); d.setHours(hh, mm||0, 0, 0);
-    const pad = n => String(n).padStart(2,'0');
-    return `${d.getUTCFullYear()}${pad(d.getUTCMonth()+1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
-  };
-  const dtStart = dt(ev.date, ev.start_time);
-  const dtEnd   = dt(ev.date, ev.end_time || ev.start_time);
-  const uid = `${ev.id}@minus3`;
-  const ics = [
-    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//minus3//DE',
-    'BEGIN:VEVENT',
-    `UID:${uid}`,
-    `DTSTAMP:${dtStart}`,
-    `DTSTART:${dtStart}`,
-    `DTEND:${dtEnd}`,
-    `SUMMARY:${ev.title}`,
-    `DESCRIPTION:${(ev.description||'').replace(/\n/g,'\\n')}`,
-    `LOCATION:${[ev.venue, ev.address].filter(Boolean).join(', ')}`,
-    'END:VEVENT',
-    'END:VCALENDAR'
-  ].join('\r\n');
-  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
-  return URL.createObjectURL(blob);
-}
-
-async function initProgramPage(){
-  const list = document.getElementById('eventList');
-  if(!list) return;
-
-  const search   = document.getElementById('search');
-  const monthSel = document.getElementById('monthFilter');
-  const data     = await loadJSON('data/events.json');
-
-  const months = [...new Set(data.map(e => new Date(e.date).toISOString().slice(0,7)))].sort();
-  months.forEach(m => {
-    const o = document.createElement('option');
-    o.value = m; o.textContent = m;
-    monthSel.appendChild(o);
+/* smooth anchor scroll */
+$$('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click', (e)=>{
+    const id = a.getAttribute('href').slice(1);
+    const el = document.getElementById(id);
+    if (!el) return;
+    e.preventDefault();
+    el.scrollIntoView({ behavior:'smooth', block:'start' });
+    history.replaceState(null,'',`#${id}`);
   });
+});
 
-  function render(items){
-    list.innerHTML = '';
-    if(items.length === 0){
-      list.innerHTML = '<p class="muted">Keine Treffer.</p>';
+/* year */
+$('#year').textContent = new Date().getFullYear();
+
+/* CTA: set to newest music link from JSON if present */
+const setListenCTA = (url) => {
+  const cta = document.getElementById('cta-listen');
+  if (cta && url) cta.href = url;
+};
+
+/* LIVE: render from /data/shows.json */
+async function renderShows(){
+  try{
+    const res = await fetch('data/shows.json', { cache:'no-store' });
+    if(!res.ok) throw new Error('shows.json missing');
+    const shows = await res.json();
+
+    const ul = document.getElementById('shows');
+    ul.innerHTML = '';
+    const upcoming = shows
+      .map(s => ({...s, d:new Date(s.date)}))
+      .filter(s => s.d >= new Date(new Date().toDateString())) // today or future
+      .sort((a,b)=>a.d-b.d)
+      .slice(0,6);
+
+    if (upcoming.length === 0){
+      document.getElementById('shows-note').hidden = false;
       return;
     }
-    items.forEach(ev => {
-      const a = document.createElement('a');
-      a.href = `event.html?id=${encodeURIComponent(ev.id)}`;
-      a.className = 'card';
-      a.innerHTML = `
-        <div class="thumb">${ev.image ? `<img src="${ev.image}" alt="${ev.title}" loading="lazy"/>` : ''}</div>
-        <div class="content">
-          <div class="meta">${formatDate(ev.date)} • ${ev.city || ''}</div>
-          <h3>${ev.title}</h3>
-          <div class="meta">${ev.venue || ''}${ev.genre ? ' • ' + ev.genre : ''}</div>
+
+    for(const s of upcoming){
+      const li = document.createElement('li');
+      li.className = 'show';
+      const dd = s.d;
+      const dateFmt = new Intl.DateTimeFormat('en-GB',{ day:'2-digit', month:'short', year:'numeric' }).format(dd);
+      li.innerHTML = `
+        <div class="date">${dateFmt}</div>
+        <div class="where">${s.city} · ${s.venue}</div>
+        <div>
+          ${s.tickets ? `<a class="btn btn-primary" href="${s.tickets}" target="_blank" rel="noopener">Tickets</a>` : `<span class="btn btn-ghost" aria-disabled="true">Soon</span>`}
         </div>`;
-      list.appendChild(a);
-    });
+      ul.appendChild(li);
+    }
+  }catch(e){
+    console.warn(e);
   }
-
-  function apply(){
-    const q = (search?.value || '').toLowerCase();
-    const m = monthSel?.value;
-    const out = data.filter(ev => {
-      const pool = [ev.title, ev.city, ev.venue, ev.genre, (ev.artists||[]).map(a=>a.name).join(' ')].join(' ').toLowerCase();
-      const matchesQ = !q || pool.includes(q);
-      const matchesM = !m || new Date(ev.date).toISOString().startsWith(m);
-      return matchesQ && matchesM;
-    });
-    render(out);
-  }
-
-  search?.addEventListener('input', apply);
-  monthSel?.addEventListener('change', apply);
-  render(data);
 }
 
-async function initEventPage(){
-  const id = qs('id');
-  if(!id) return;
+/* MUSIC: BMTH-style artworks grid from /data/music.json */
+async function renderMusic(){
+  try{
+    const res = await fetch('data/music.json', { cache:'no-store' });
+    if(!res.ok) throw new Error('music.json missing');
+    const items = await res.json();
+    const grid = document.getElementById('artGrid');
+    grid.innerHTML = '';
 
-  const data = await loadJSON('data/events.json');
-  const ev   = data.find(x => x.id === id);
+    // newest first
+    items.sort((a,b)=> new Date(b.release) - new Date(a.release));
 
-  const container = document.getElementById('event');
-  if(!ev){
-    if (container) container.innerHTML = '<p>Event nicht gefunden.</p>';
-    return;
+    // set hero CTA to newest universal link if present
+    setListenCTA(items[0]?.url);
+
+    for(const m of items){
+      const a = document.createElement('a');
+      a.className = 'card';
+      a.href = m.url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.title = `${m.title} (${m.type})`;
+
+      const img = document.createElement('img');
+      img.alt = m.title + ' artwork';
+      img.loading = 'lazy';
+      img.src = m.artwork; // e.g., assets/music/last-single.jpg
+
+      const meta = document.createElement('div');
+      meta.className = 'card-meta';
+      meta.innerHTML = `<h3>${m.title}</h3><p>${m.type} · ${new Date(m.release).getFullYear()}</p>`;
+
+      a.appendChild(img);
+      a.appendChild(meta);
+      grid.appendChild(a);
+    }
+  }catch(e){
+    console.warn(e);
   }
-
-  // Hero-Bild
-  const img = document.getElementById('eventImage');
-  if(ev.image){ img.src = ev.image; img.alt = ev.title; } else { img.style.display = 'none'; }
-
-  // Textfelder
-  document.getElementById('eventTitle').textContent     = ev.title;
-  document.getElementById('eventSubtitle').textContent  = [ev.city, ev.venue].filter(Boolean).join(' • ');
-  document.getElementById('eventDate').textContent      = formatDate(ev.date);
-  document.getElementById('eventDoor').textContent      = ev.door_time || '-';
-  document.getElementById('eventStart').textContent     = ev.start_time || '-';
-  document.getElementById('eventVenue').textContent     = [ev.venue, ev.address].filter(Boolean).join(', ');
-
-  // Beschreibung
-  const desc = document.getElementById('eventDesc');
-  desc.innerHTML = (ev.description || '').split('\n').map(p => `<p>${p}</p>`).join('');
-
-  // --- Tickets: immer Abendkasse + Hinweis (kein Onlineverkauf) ---
-  const ticket = document.getElementById('ticketLink');
-  ticket.removeAttribute('target');
-  ticket.removeAttribute('rel');
-  ticket.removeAttribute('href');
-  ticket.classList.add('ghost');
-  ticket.textContent = 'Tickets: Abendkasse';
-  ticket.addEventListener('click', (e)=> e.preventDefault());
-
-  const note = document.createElement('div');
-  note.className = 'ticket-note';
-  note.innerHTML = `
-    <strong>Tickets</strong><br>
-    Verkauf ausschliesslich an der Abendkasse.<br>
-    Bezahlung: Bar, TWINT oder Karte.<br>
-    <span class="muted">Alle Einnahmen aus dem Ticketverkauf werden als Gage fair unter den Bands aufgeteilt.</span>
-  `;
-  document.querySelector('.cta-row')?.after(note);
-  // --- /Tickets ---
-
-  // Kalender
-  const cal = document.getElementById('calLink');
-  cal.addEventListener('click', e => {
-    e.preventDefault();
-    const url = makeICS(ev);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${slugify(ev.title)}.ics`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
-  });
-
-  // Künstlerliste
-  const wrap = document.getElementById('artists');
-  (ev.artists || []).forEach(a => {
-    const row = document.createElement('div');
-    row.className = 'artist';
-    row.innerHTML = `
-      ${a.image ? `<img src="${a.image}" alt="${a.name}" />` : '<div></div>'}
-      <div>
-        <div><strong>${a.name}</strong>${a.role ? ` – ${a.role}` : ''}</div>
-        ${a.links ? `<div class="muted">${a.links.map(l => `<a href="${l.url}" target="_blank" rel="noopener">${l.label}</a>`).join(' • ')}</div>` : ''}
-      </div>`;
-    wrap.appendChild(row);
-  });
 }
 
-async function initPastPage(){
-  const el = document.getElementById('gallery');
-  if(!el) return;
-  const past = await loadJSON('data/past.json');
-  el.innerHTML = '';
-  past.forEach(item => {
-    const fig = document.createElement('figure');
-    fig.innerHTML = `<img src="${item.src}" alt="${item.caption||'Vergangenes Event'}" loading="lazy"/><figcaption>${item.caption||''}</figcaption>`;
-    el.appendChild(fig);
-  });
-}
-
-(function initMobileNav(){
-  const header = document.querySelector('.site-header');
-  const btn    = document.querySelector('.nav-toggle');
-  const nav    = document.querySelector('.site-header nav');
-  if(!header || !btn || !nav) return;
-
-  const close = () => { header.classList.remove('nav-open'); btn.setAttribute('aria-expanded','false'); };
-  const open  = () => { header.classList.add('nav-open');  btn.setAttribute('aria-expanded','true');  };
-
-  btn.addEventListener('click', () => {
-    header.classList.contains('nav-open') ? close() : open();
-  });
-
-  window.addEventListener('resize', () => { if (window.innerWidth > 820) close(); });
-  nav.addEventListener('click', (e) => { if (e.target.closest('a') && window.innerWidth <= 820) close(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
-})();
+renderShows();
+renderMusic();
