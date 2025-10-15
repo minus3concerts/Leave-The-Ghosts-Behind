@@ -1,0 +1,23 @@
+[
+  {
+    "title": "Glass Skin",
+    "type": "Single",
+    "release": "2025-09-01",
+    "artwork": "assets/hero.jpg",
+    "url": "https://open.spotify.com/"
+  },
+  {
+    "title": "Hollow Routine",
+    "type": "Single",
+    "release": "2025-06-12",
+    "artwork": "assets/past3.jpg",
+    "url": "https://music.apple.com/"
+  },
+  {
+    "title": "We Move In Static",
+    "type": "EP",
+    "release": "2024-11-10",
+    "artwork": "assets/past4.jpg",
+    "url": "https://youtu.be/"
+  }
+]
