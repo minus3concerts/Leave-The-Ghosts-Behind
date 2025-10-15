@@ -166,3 +166,24 @@ a:hover{ color:#fff; text-decoration:underline }
 }
 .legal a{ color:var(--muted); margin-left:12px }
 .legal a:hover{ color:#fff }
+
+/* Fixiertes Logo über dem Hero – bleibt beim Scrollen sichtbar */
+.hero-logo--fixed{
+  position: fixed;
+  top: 26vh;                /* vertikale Position über der Headline */
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(160px, 42vw);  /* responsive Größe */
+  opacity: .26;             /* 0.2–0.4 je nach Hero-Bild */
+  filter: drop-shadow(0 0 10px rgba(0,0,0,.55));
+  pointer-events: none;     /* blockiert keine Klicks */
+  z-index: 10;              /* unter Header (Header hat z-index:50) */
+}
+
+@media (min-width: 900px){
+  .hero-logo--fixed{
+    top: 24vh;
+    width: min(220px, 22vw);
+  }
+}
+
