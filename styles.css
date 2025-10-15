@@ -4,8 +4,8 @@
   --text:#e5f2ff;
   --muted:#9fb3c8;
   --line:#1b222b;
-  --accent:#00E5FF; /* cyan */
-  --accent-20: rgba(0,229,255,.2);
+  --accent:#E50914; /* cyan */
+  --accent-20: rgba(229,9,20,.2);
 }
 
 *{ box-sizing:border-box }
@@ -31,7 +31,7 @@ a:hover{ text-decoration:underline }
   font-weight:700; letter-spacing:.3px; transition:transform .12s ease, background .12s ease, color .12s ease;
 }
 .btn:hover{ transform:translateY(-1px) }
-.btn-primary{ background:var(--accent); color:#00171b }
+.btn-primary{ background:var(--accent); color:#fff }
 .btn-ghost{ background:transparent; color:var(--accent) }
 
 .site-header{
@@ -70,8 +70,8 @@ a:hover{ text-decoration:underline }
 .hero-media{ position:relative; min-height:72vh; display:grid; place-items:end; background:#000 url('assets/hero.jpg') center/cover no-repeat fixed }
 .hero-overlay{
   position:absolute; inset:0; background:
-   radial-gradient(1000px 600px at 10% 0%, rgba(0,229,255,.08), transparent 60%),
-   radial-gradient(800px 600px at 90% 100%, rgba(0,229,255,.08), transparent 60%),
+   radial-gradient(1000px 600px at 10% 0%, rgba(229,9,20,.08), transparent 60%),
+   radial-gradient(800px 600px at 90% 100%, rgba(229,9,20,.08), transparent 60%),
    linear-gradient(to bottom, rgba(0,0,0,.35), rgba(0,0,0,.75) 70%);
 }
 .hero-content{ position:relative; padding:80px 0; text-align:left }
