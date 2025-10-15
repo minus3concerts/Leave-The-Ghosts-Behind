@@ -1,23 +1,16 @@
 [
   {
-    "title": "Glass Skin",
+    "title": "With You In The Dark",
     "type": "Single",
-    "release": "2025-09-01",
-    "artwork": "assets/hero.jpg",
-    "url": "https://open.spotify.com/"
+    "release": "2025-11-07",
+    "artwork": "assets/WithYou.png",
+    "url": "https://open.spotify.com/intl-de/track/0g0wXUOrx2AhW1bTgCJuL9?si=1da89d7b48404ed3"
   },
   {
-    "title": "Hollow Routine",
+    "title": "Lost",
     "type": "Single",
-    "release": "2025-06-12",
-    "artwork": "assets/past3.jpg",
-    "url": "https://music.apple.com/"
-  },
-  {
-    "title": "We Move In Static",
-    "type": "EP",
-    "release": "2024-11-10",
-    "artwork": "assets/past4.jpg",
-    "url": "https://youtu.be/"
+    "release": "2025-12-07",
+    "artwork": "assets/Lost.png",
+    "url": "https://open.spotify.com/intl-de/artist/6hdanQjSIH2dJNVowQL53t"
   }
 ]
