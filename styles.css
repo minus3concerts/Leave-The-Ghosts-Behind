@@ -199,3 +199,34 @@ a:hover{ color:#fff; text-decoration:underline }
     font-size: 14px;             /* etwas größerer Name */
   }
 }
+/* SoundCloud Player Styling */
+.soundcloud-player {
+  margin-top: 30px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  background: #000;
+}
+
+.soundcloud-player iframe {
+  display: block;
+  border: none;
+  width: 100%;
+}
+
+.sc-credit {
+  font-size: 12px;
+  text-align: center;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.sc-credit a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.sc-credit a:hover {
+  color: var(--text);
+}
